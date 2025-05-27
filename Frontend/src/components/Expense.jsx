@@ -1,7 +1,11 @@
-import React from "react";
+import React from 'react'
 
 const Expense = () => {
-  return <div>Expense</div>;
-};
+  return (
+    <div className="flex items-start h-full p-4">
+      <h1 className="text-2xl font-bold">Expense</h1>
+    </div>
+  )
+}
 
-export default Expense;
+export default Expense
