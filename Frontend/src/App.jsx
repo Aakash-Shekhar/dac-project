@@ -1,6 +1,7 @@
 import React from "react";
-import Navbar from "./components/Navbar";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Header from "./components/Header";
+import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import Income from "./components/Income";
 import Expense from "./components/Expense";
@@ -12,16 +13,21 @@ import SignUp from "./components/SignUp";
 const App = () => {
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/dashboard" element={<Dashboard />}></Route>
-        <Route path="/income" element={<Income />}></Route>
-        <Route path="/expense" element={<Expense />}></Route>
-        <Route path="/budget" element={<Budget />}></Route>
-        <Route path="/setting" element={<Setting />}></Route>
-        <Route path="/login" element={<Login />}></Route>
-        <Route path="/signup" element={<SignUp />}></Route>
-      </Routes>
+      <Header /> {/* Top header bar */}
+      <div className="flex">
+        <Navbar /> {/* Sidebar */}
+        <div className="flex-1 p-6">
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/income" element={<Income />} />
+            <Route path="/expense" element={<Expense />} />
+            <Route path="/budget" element={<Budget />} />
+            <Route path="/setting" element={<Setting />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+          </Routes>
+        </div>
+      </div>
     </BrowserRouter>
   );
 };
