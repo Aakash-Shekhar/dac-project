@@ -2,10 +2,11 @@ import React from "react";
 import { MdDashboard } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
 import { Link } from "react-router-dom";
+import { FaHome } from "react-icons/fa";
 
 const Navbar = () => {
   return (
-    <div className="p-3 w-1/6 h-screen shadow-lg mt-5">
+    <div className="p-3 w-1/6 shadow-lg mt-5">
       <ul className="space-y-6">
         <li>
           <Link
