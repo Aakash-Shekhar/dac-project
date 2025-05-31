@@ -13,9 +13,9 @@ import SignUp from "./components/SignUp";
 const App = () => {
   return (
     <BrowserRouter>
-      <Header /> {/* Top header bar */}
+      <Header /> 
       <div className="flex">
-        <Navbar /> {/* Sidebar */}
+        <Navbar /> 
         <div className="flex-1 p-6">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
