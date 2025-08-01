@@ -1,33 +1,34 @@
 import React from "react";
-import { CiLogin } from "react-icons/ci";
-import { Link } from "react-router-dom";
 
-const Header = () => {
+const Header = ({ toggleSidebar }) => {
   return (
-    <div>
-      <div className="p-3 shadow-lg h-20 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Expense Tracker</h1>
-
-        <div>
-          <button className="mr-4 text-xl font-bold rounded-md p-2 bg-yellow-300 hover:bg-yellow-400 cursor-pointer border border-2 border-yellow-500 transform hover:scale-110 transition duration-500">
-            <div className="flex justify-center items-center">
-              <CiLogin />
-              <Link to="/login">
-                <p>LogIn</p>
-              </Link>
-            </div>
-          </button>
-          <button className="mr-4 text-xl font-bold rounded-md p-2 bg-red-500 hover:bg-red-600 cursor-pointer border border-2 border-red-700 transform hover:scale-110 transition duration-500">
-            <div className="flex justify-center items-center">
-              <img src="image/add-user.png" alt="" width="20px" height="20px" />
-              <Link to="/signup">
-                <p>SignUp</p>
-              </Link>
-            </div>
-          </button>
-        </div>
+    <header className="bg-yellow-400 px-4 py-5 w-full relative flex items-center justify-center">
+      {/* Centered Icon + Title */}
+      <div className="flex items-center gap-2">
+        <img src="/image/budget.png" alt="Expense Icon" className="w-8 h-8" />
+        <h1 className="text-2xl font-bold">Expense Tracker</h1>
       </div>
-    </div>
+
+      {/* Hamburger icon for mobile (placed at right) */}
+      <button
+        className="absolute right-4 md:hidden text-black focus:outline-none"
+        onClick={toggleSidebar}
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+    </header>
   );
 };
 
