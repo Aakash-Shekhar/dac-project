@@ -1,64 +1,49 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { MdDashboard } from "react-icons/md";
 import { IoIosSettings } from "react-icons/io";
-import { Link } from "react-router-dom";
-import { FaHome } from "react-icons/fa";
+
+const navLinks = [
+  { to: "/dashboard", label: "Dashboard", icon: <MdDashboard size={22} /> },
+  {
+    to: "/income",
+    label: "Income",
+    icon: <img src="/image/icons8-income-50.png" width="22" />,
+  },
+  {
+    to: "/expense",
+    label: "Expense",
+    icon: <img src="/image/icons8-expense-50.png" width="22" />,
+  },
+  {
+    to: "/budget",
+    label: "Budget",
+    icon: <img src="/image/icons8-budget-50.png" width="22" />,
+  },
+  { to: "/setting", label: "Setting", icon: <IoIosSettings size={22} /> },
+];
 
 const Navbar = () => {
   return (
-    <div className="p-3 w-1/6 shadow-lg mt-5">
-      <ul className="space-y-6">
-        <li>
-          <Link
-            to="/dashboard"
-            className="flex font-bold text-xl items-center mb-16 transform hover:scale-110 transition duration-500 pl-2"
-          >
-            <MdDashboard size={25} />
-            <p className="pl-2">Dashboard</p>
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            to="/income"
-            className="flex font-bold text-xl items-center mb-16 transform hover:scale-110 transition duration-500 pl-2"
-          >
-            <img src="image/icons8-income-50.png" alt="" width="25px" />
-            <p className="pl-2">Income</p>
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            to="/expense"
-            className="flex font-bold text-xl items-center mb-16 transform hover:scale-110 transition duration-500 pl-2"
-          >
-            <img src="image/icons8-expense-50.png" alt="" width="25px" />
-            <p className="pl-2">Expense</p>
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            to="/budget"
-            className="flex font-bold text-xl items-center mb-16 transform hover:scale-110 transition duration-500 pl-2"
-          >
-            <img src="image/icons8-budget-50.png" alt="" width="25px" />
-            <p className="pl-2">Budget</p>
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            to="/setting"
-            className="flex font-bold text-xl items-center mb-16 transform hover:scale-110 transition duration-500 pl-2"
-          >
-            <IoIosSettings size={25} />
-            <p className="pl-2">Setting</p>
-          </Link>
-        </li>
+    <aside
+      className="bg-white h-full w-full md:w-64 p-4"
+      style={{ display: "flex", flexDirection: "column" }}
+    >
+      <ul className="space-y-4">
+        {navLinks.map(({ to, label, icon }) => (
+          <li key={label}>
+            <Link
+              to={to}
+              className="flex items-center gap-3 text-gray-800 text-lg font-semibold hover:bg-yellow-200 p-2 rounded-md transition-transform transform hover:scale-105"
+              style={{ textDecoration: "none" }}
+            >
+              {icon}
+              <span>{label}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
-    </div>
+    </aside>
   );
 };
 
