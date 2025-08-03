@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { checkValidData } from "../utils/FormValidatation";
 import axios from "axios"; // ✅ Using default axios
 
+import { useAuth } from "./context/AuthContext";
+
 const Login = () => {
+  const { login: setAuthUser } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +31,7 @@ const Login = () => {
       );
 
       if (res.data.success) {
+        setAuthUser(res.data.user);
         console.log("Login successful:", res.data);
         navigate("/dashboard");
       }

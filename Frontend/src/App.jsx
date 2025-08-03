@@ -13,21 +13,39 @@ import Budget from "./components/Budget";
 import Setting from "./components/Setting";
 import Layout from "./components/Layout";
 import SignUp from "./components/SignUp";
+import Home from "./components/Home"; 
+import { useAuth } from "../src/components/context/AuthContext"; 
+
+// Protected Route Component
+function PrivateRoute({ children }) {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" />;
+}
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
 
-        <Route element={<Layout />}>
+        {/* Protected Routes inside Layout */}
+        <Route
+          element={
+            <PrivateRoute>
+              <Layout />
+            </PrivateRoute>
+          }
+        >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/income" element={<Income />} />
           <Route path="/expense" element={<Expense />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/setting" element={<Setting />} />
         </Route>
+
       </Routes>
     </Router>
   );
