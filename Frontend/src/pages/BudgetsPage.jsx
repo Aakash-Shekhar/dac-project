@@ -46,6 +46,10 @@ const BudgetsPage = () => {
         setError(null);
 
         try {
+            if (categories.length === 0 && !error) {
+                await fetchCategories();
+            }
+
             const queryParams = new URLSearchParams();
             if (filterCategory) queryParams.append('category', filterCategory);
             if (filterPeriod) queryParams.append('period', filterPeriod);
@@ -73,22 +77,22 @@ const BudgetsPage = () => {
     };
 
     const handleBudgetChange = () => {
+        fetchCategories();
         fetchBudgets();
     };
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
             fetchCategories();
+            fetchBudgets();
         }
     }, [isAuthenticated, authLoading]);
 
     useEffect(() => {
-        if (isAuthenticated && !authLoading && categories.length > 0) {
-            fetchBudgets();
-        } else if (isAuthenticated && !authLoading && categories.length === 0 && !pageLoading && !error) {
+        if (isAuthenticated && !authLoading) {
             fetchBudgets();
         }
-    }, [isAuthenticated, authLoading, filterCategory, filterPeriod, filterStartDate, filterEndDate, sortBy, sortOrder, categories.length]);
+    }, [filterCategory, filterPeriod, filterStartDate, filterEndDate, sortBy, sortOrder]);
 
 
     if (authLoading || pageLoading) {
@@ -98,11 +102,6 @@ const BudgetsPage = () => {
     if (error) {
         return <StatusDisplay type="error" message={error} onRetry={handleBudgetChange} />;
     }
-
-    const getCategoryNameById = (id) => {
-        const cat = categories.find(c => c._id === id);
-        return cat ? cat.name : '';
-    };
 
     const budgetableCategoriesForFilter = categories.filter(cat => cat.type === 'expense');
 
