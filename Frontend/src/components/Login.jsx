@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkValidData } from "../utils/FormValidatation";
+import axios from "axios"; // ✅ Using default axios
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +10,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     const validationMessage = checkValidData(email, password);
@@ -18,9 +19,22 @@ const Login = () => {
       return;
     }
 
-    console.log("Login attempted with:", { email, password });
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/auth/login", // 💡 Use full URL
+        { email, password },
+        { withCredentials: true } // ✅ Needed if using cookies/session
+      );
 
-    navigate("/dashboard");
+      if (res.data.success) {
+        console.log("Login successful:", res.data);
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      const errMsg =
+        error.response?.data?.message || "Login failed. Please try again.";
+      setErrorMessage(errMsg);
+    }
   };
 
   return (
