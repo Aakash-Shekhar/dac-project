@@ -9,6 +9,7 @@ import { FiArrowUpCircle, FiArrowDownCircle, FiDollarSign } from 'react-icons/fi
 
 import StatusDisplay from '../components/common/StatusDisplay.jsx';
 import { formatCurrency } from '../utils/formatters.js';
+import { FaRupeeSign } from 'react-icons/fa';
 
 
 ChartJS.register(...registerables);
@@ -92,7 +93,7 @@ const DashboardPage = () => {
             </div>
             <div className="flex flex-col items-center p-4 rounded-lg shadow-sm border
                             ${summaryData.netSavings >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}">
-              <FiDollarSign size={32} className={`mb-2 ${summaryData.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+              <FaRupeeSign size={32} className={`mb-2 ${summaryData.netSavings >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
               <p className="text-lg font-medium text-gray-700">Net Savings/Loss</p>
               <p className={`text-2xl font-bold ${summaryData.netSavings >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                 {formatCurrency(summaryData.netSavings)}
