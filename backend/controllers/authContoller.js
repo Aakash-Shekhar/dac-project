@@ -125,3 +125,22 @@ exports.logout = (req, res) => {
   });
 };
 
+
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); // Exclude password
+    res.status(200).json({
+      success: true,
+      message: "All users fetched successfully",
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching users",
+    });
+  }
+};
+
