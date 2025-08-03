@@ -6,6 +6,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
 
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login: authContextLogin } = useAuth();
+   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
