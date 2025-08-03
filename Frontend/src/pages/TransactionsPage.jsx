@@ -13,6 +13,7 @@ const TransactionsPage = () => {
 
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [budgets, setBudgets] = useState([]);
     const [pageLoading, setPageLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -22,6 +23,7 @@ const TransactionsPage = () => {
     const [filterEndDate, setFilterEndDate] = useState('');
     const [sortBy, setSortBy] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
+
 
     const fetchCategories = async () => {
         setError(null);
@@ -71,35 +73,54 @@ const TransactionsPage = () => {
         }
     };
 
+    const fetchBudgets = async () => {
+        setError(null);
+        try {
+            const res = await axios.get('http://localhost:5000/budgets', {
+                withCredentials: true
+            });
+            if (res.data.success) {
+                setBudgets(res.data.budgets);
+            } else {
+                setError(res.data.message || 'Failed to fetch budgets.');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error fetching budgets.');
+            console.error("Fetch budgets error:", err);
+        }
+    };
+
+
     const handleDataChange = () => {
         fetchTransactions();
+        fetchBudgets();
     };
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
             fetchCategories();
+            fetchTransactions();
+            fetchBudgets();
         }
     }, [isAuthenticated, authLoading]);
 
     useEffect(() => {
-        if (isAuthenticated && !authLoading && categories.length > 0) {
+        if (isAuthenticated && !authLoading) {
             fetchTransactions();
-        } else if (isAuthenticated && !authLoading && categories.length === 0 && !pageLoading && !error) {
-            fetchTransactions();
+            fetchBudgets();
         }
-    }, [isAuthenticated, authLoading, filterType, filterCategory, filterStartDate, filterEndDate, sortBy, sortOrder, categories.length]);
+    }, [filterType, filterCategory, filterStartDate, filterEndDate, sortBy, sortOrder]);
+
 
     if (authLoading || pageLoading) {
-        return <StatusDisplay type="loading" message="Loading transactions and categories..." />;
+        return <StatusDisplay type="loading" message="Loading transactions, categories, and budgets..." />;
     }
 
     if (error) {
         return <StatusDisplay type="error" message={error} onRetry={handleDataChange} />;
     }
 
-    const expenseCategories = categories.filter(cat => cat.type === 'expense');
-    const incomeCategories = categories.filter(cat => cat.type === 'income');
-    const allFilteredCategories = [...expenseCategories, ...incomeCategories];
+    const allCategoriesForFilter = [...categories];
 
     return (
         <div className="flex flex-col">
@@ -111,7 +132,7 @@ const TransactionsPage = () => {
                         <select
                             id="filterType"
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
+                            onChange={(e) => { setFilterType(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Types</option>
@@ -125,12 +146,12 @@ const TransactionsPage = () => {
                         <select
                             id="filterCategory"
                             value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
+                            onChange={(e) => { setFilterCategory(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Categories</option>
-                            {allFilteredCategories.length > 0 ? (
-                                allFilteredCategories.map(cat => (
+                            {allCategoriesForFilter.length > 0 ? (
+                                allCategoriesForFilter.map(cat => (
                                     <option key={cat._id} value={cat._id}>
                                         {cat.name} ({cat.type})
                                     </option>
@@ -147,7 +168,7 @@ const TransactionsPage = () => {
                             id="filterStartDate"
                             type="date"
                             value={filterStartDate}
-                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            onChange={(e) => { setFilterStartDate(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
@@ -158,7 +179,7 @@ const TransactionsPage = () => {
                             id="filterEndDate"
                             type="date"
                             value={filterEndDate}
-                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            onChange={(e) => { setFilterEndDate(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
@@ -168,7 +189,7 @@ const TransactionsPage = () => {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
+                            onChange={(e) => { setSortBy(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="date">Date</option>
@@ -181,7 +202,7 @@ const TransactionsPage = () => {
                         <select
                             id="sortOrder"
                             value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value)}
+                            onChange={(e) => { setSortOrder(e.target.value); }}
                             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="desc">Descending</option>
@@ -208,7 +229,7 @@ const TransactionsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add New Transaction</h2>
-                    <TransactionForm categories={categories} onTransactionAdded={handleDataChange} />
+                    <TransactionForm categories={categories} budgets={budgets} onTransactionAdded={handleDataChange} />
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-md md:col-span-1">

@@ -1,5 +1,6 @@
 const Budget = require('../models/Budget');
 const Category = require('../models/Category');
+const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
 
 const asyncHandler = fn => (req, res, next) =>
@@ -74,7 +75,8 @@ exports.getBudgets = asyncHandler(async (req, res) => {
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
             return res.status(400).json({ success: false, message: 'Invalid date range filter.' });
         }
-        query.date = { $gte: start, $lte: end };
+        query.startdate = { $gte: start };
+        query.enddate = { $lte: end };
     } else if (startDate) {
         const start = new Date(startDate);
         if (isNaN(start.getTime())) {
@@ -100,11 +102,44 @@ exports.getBudgets = asyncHandler(async (req, res) => {
         sortOptions.startdate = -1;
     }
 
-    const budgets = await Budget.find(query)
+    let budgets = await Budget.find(query)
         .populate('category', 'name type')
         .sort(sortOptions);
 
-    res.status(200).json({ success: true, budgets });
+    const budgetsWithActuals = await Promise.all(budgets.map(async (budget) => {
+        const transactionsForBudget = await Transaction.aggregate([
+            {
+                $match: {
+                    userid: new mongoose.Types.ObjectId(userid),
+                    type: 'expense',
+                    category: budget.category._id,
+                    date: {
+                        $gte: budget.startdate,
+                        $lte: budget.enddate
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalSpent: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const actualSpent = transactionsForBudget.length > 0 ? transactionsForBudget[0].totalSpent : 0;
+        const remaining = budget.limit - actualSpent;
+        const isOverBudget = remaining < 0;
+
+        return {
+            ...budget.toObject(),
+            actualSpent,
+            remaining,
+            isOverBudget
+        };
+    }));
+
+    res.status(200).json({ success: true, budgets: budgetsWithActuals });
 });
 
 exports.updateBudget = asyncHandler(async (req, res) => {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiDollarSign, FiCalendar, FiEdit, FiTrash2 } from 'react-icons/fi';
-import { FaRupeeSign } from 'react-icons/fa';
+import { FiDollarSign, FiCalendar, FiEdit, FiTrash2, FiAlertCircle } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
+import { FaRupeeSign } from 'react-icons/fa';
+import { formatCurrency } from '../../utils/formatters.js';
 
-const TransactionForm = ({ categories, onTransactionAdded }) => {
+const TransactionForm = ({ categories, budgets, onTransactionAdded }) => {
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -14,6 +15,8 @@ const TransactionForm = ({ categories, onTransactionAdded }) => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [overBudgetWarning, setOverBudgetWarning] = useState(null);
+
   const filteredCategories = categories.filter(cat => cat.type === type);
 
   useEffect(() => {
@@ -21,6 +24,39 @@ const TransactionForm = ({ categories, onTransactionAdded }) => {
       setCategory('');
     }
   }, [type, filteredCategories, category]);
+
+  useEffect(() => {
+    if (type === 'expense' && category && amount && date) {
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        setOverBudgetWarning(null);
+        return;
+      }
+
+      const transactionDate = new Date(date);
+      const relevantBudget = budgets.find(b =>
+        b.category._id === category &&
+        transactionDate >= new Date(b.startdate) &&
+        transactionDate <= new Date(b.enddate)
+      );
+
+      if (relevantBudget) {
+        if (relevantBudget.remaining !== undefined) {
+            if (parsedAmount > relevantBudget.remaining) {
+                setOverBudgetWarning(`This transaction of ${formatCurrency(parsedAmount)} would put you over your budget of ${formatCurrency(relevantBudget.limit)} for "${relevantBudget.category.name}". Remaining: ${formatCurrency(relevantBudget.remaining)}`);
+            } else {
+                setOverBudgetWarning(null);
+            }
+        } else {
+            setOverBudgetWarning(null);
+        }
+      } else {
+        setOverBudgetWarning(null);
+      }
+    } else {
+      setOverBudgetWarning(null);
+    }
+  }, [type, amount, category, date, budgets, formatCurrency]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,6 +97,7 @@ const TransactionForm = ({ categories, onTransactionAdded }) => {
         setDescription('');
         setDate('');
         setRecurring(false);
+        setOverBudgetWarning(null);
       } else {
         setError(res.data.message || 'Failed to add transaction.');
       }
@@ -79,6 +116,12 @@ const TransactionForm = ({ categories, onTransactionAdded }) => {
           {error}
         </p>
       )}
+      {overBudgetWarning && (
+        <p className="text-orange-600 bg-orange-50 p-2 rounded-md text-sm text-center border border-orange-200 flex items-center gap-1">
+          <FiAlertCircle size={18} /> {overBudgetWarning}
+        </p>
+      )}
+
 
       <div>
         <label htmlFor="type" className="block text-gray-700 font-medium mb-1">Type</label>
@@ -169,8 +212,8 @@ const TransactionForm = ({ categories, onTransactionAdded }) => {
       <button
         type="submit"
         className={`w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-200
-                     ${isLoading ? 'opacity-60 cursor-not-allowed flex items-center justify-center gap-2' : ''}`}
-        disabled={isLoading}
+                    ${isLoading ? 'opacity-60 cursor-not-allowed flex items-center justify-center gap-2' : ''}`}
+        disabled={isLoading || overBudgetWarning}
       >
         {isLoading ? <><ImSpinner2 className="animate-spin" /> Adding...</> : 'Add Transaction'}
       </button>

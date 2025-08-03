@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiAlertCircle } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
 import { FaRupeeSign } from 'react-icons/fa';
 import { formatCurrency, formatDate } from '../../utils/formatters.js';
@@ -142,8 +142,10 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
           {budgets.map(b => (
             <li
               key={b._id}
-              className="p-3 bg-purple-50 rounded-lg border border-purple-100 shadow-sm transition-all duration-200 ease-in-out
-                         flex flex-col sm:flex-row justify-between items-start sm:items-center"
+              className="p-3 rounded-lg shadow-sm transition-all duration-200 ease-in-out
+                         flex flex-col sm:flex-row justify-between items-start sm:items-center
+                         border
+                         ${b.isOverBudget ? 'bg-red-100 border-red-300' : 'bg-purple-50 border-purple-100'}"
             >
               {editingBudgetId === b._id ? (
                 <form onSubmit={handleEditSubmit} className="w-full space-y-2">
@@ -171,7 +173,7 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
                       type="number"
                       name="limit"
                       value={editFormData.limit}
-                      onChange={handleEditChange}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, limit: e.target.value }))}
                       className="w-full p-2 border rounded-md"
                       placeholder="Limit"
                       required
@@ -240,7 +242,7 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
                 </form>
               ) : (
                 <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                  <div className="mb-2 sm:mb-0">
+                  <div className="mb-2 sm:mb-0 flex-1">
                     <p className="font-semibold text-gray-800 text-lg">
                       {getCategoryName(b.category?._id || b.category)} -{' '}
                       <span className="font-bold text-purple-600">
@@ -252,8 +254,22 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
                       {formatDate(b.startdate)} -{' '}
                       {formatDate(b.enddate)}
                     </p>
+                    {/* Budget vs Actual Display */}
+                    <div className="mt-1 flex items-center">
+                        <span className="text-sm font-medium text-gray-700 mr-2">Actual Spent:</span>
+                        <span className={`font-semibold ${b.isOverBudget ? 'text-red-700' : 'text-gray-900'}`}>
+                            {formatCurrency(b.actualSpent)}
+                        </span>
+                        <span className="ml-2 text-sm font-medium text-gray-700 mr-2">Remaining:</span>
+                        <span className={`font-bold ${b.isOverBudget ? 'text-red-700' : 'text-blue-600'}`}>
+                            {formatCurrency(b.remaining)}
+                        </span>
+                        {b.isOverBudget && (
+                            <FiAlertCircle size={18} className="ml-2 text-red-700" title="You are over budget!" />
+                        )}
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 mt-2 sm:mt-0">
                     <button
                       onClick={() => handleEditClick(b)}
                       className="text-blue-500 hover:text-blue-700 text-sm p-2 rounded-md hover:bg-blue-100 transition"
@@ -274,6 +290,7 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
           ))}
         </ul>
       )}
+      {/* CONFIRMATION MODAL FOR DELETION */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         message={`Are you sure you want to delete the budget for ${getCategoryName(budgetToDeleteCategoryName)}?`}
