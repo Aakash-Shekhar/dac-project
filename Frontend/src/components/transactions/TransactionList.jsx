@@ -3,6 +3,7 @@ import axios from 'axios';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
 import { formatCurrency, formatDate } from '../../utils/formatters.js';
+import ConfirmModal from '../common/ConfirmModal.jsx';
 
 const TransactionList = ({ transactions, categories, onTransactionDeleted, onTransactionUpdated }) => {
   const [editingTransactionId, setEditingTransactionId] = useState(null);
@@ -11,15 +12,25 @@ const TransactionList = ({ transactions, categories, onTransactionDeleted, onTra
   const [editLoadingId, setEditLoadingId] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) {
-      return;
-    }
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [transactionToDeleteId, setTransactionToDeleteId] = useState(null);
+  const [transactionToDeleteDescription, setTransactionToDeleteDescription] = useState('');
+
+
+  const confirmDelete = (id, description) => {
+    setTransactionToDeleteId(id);
+    setTransactionToDeleteDescription(description || 'this transaction');
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    setIsConfirmModalOpen(false);
+    if (!transactionToDeleteId) return;
 
     setError(null);
-    setDeleteLoadingId(id);
+    setDeleteLoadingId(transactionToDeleteId);
     try {
-      await axios.delete(`http://localhost:5000/transactions/${id}`, {
+      await axios.delete(`http://localhost:5000/transactions/${transactionToDeleteId}`, {
         withCredentials: true
       });
       onTransactionDeleted();
@@ -28,7 +39,20 @@ const TransactionList = ({ transactions, categories, onTransactionDeleted, onTra
       console.error("Delete transaction error:", err);
     } finally {
       setDeleteLoadingId(null);
+      setTransactionToDeleteId(null);
+      setTransactionToDeleteDescription('');
     }
+  };
+
+  const cancelDelete = () => {
+    setIsConfirmModalOpen(false);
+    setTransactionToDeleteId(null);
+    setTransactionToDeleteDescription('');
+  };
+
+
+  const handleDelete = async (id) => {
+    confirmDelete(id, transactions.find(t => t._id === id)?.description);
   };
 
   const handleEditClick = (transaction) => {
@@ -246,6 +270,14 @@ const TransactionList = ({ transactions, categories, onTransactionDeleted, onTra
           ))}
         </ul>
       )}
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        message={`Are you sure you want to delete ${transactionToDeleteDescription}? This action cannot be undone.`}
+        onConfirm={executeDelete}
+        onCancel={cancelDelete}
+        confirmText="Delete Transaction"
+      />
     </div>
   );
 };

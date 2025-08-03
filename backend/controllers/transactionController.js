@@ -65,10 +65,6 @@ exports.getTransactions = asyncHandler(async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(category)) {
             return res.status(400).json({ success: false, message: 'Invalid category ID filter.' });
         }
-        const categoryExists = await Category.findOne({ _id: category, userid });
-        if (!categoryExists) {
-            return res.status(400).json({ success: false, message: 'Category filter not found or does not belong to this user.' });
-        }
         query.category = category;
     }
     if (startDate && endDate) {
@@ -204,11 +200,11 @@ exports.getChartData = asyncHandler(async (req, res) => {
     const currentMonth = new Date().getMonth();
 
     if (period === 'month') {
-        groupByFormat = { $month: "$date" };
         const targetYear = parseInt(year);
         if (isNaN(targetYear) || targetYear < 2000 || targetYear > currentYear + 10) {
             return res.status(400).json({ success: false, message: "Invalid year for monthly chart data." });
         }
+        groupByFormat = { $month: "$date" };
         matchDateRange = {
             $gte: new Date(`${targetYear}-01-01T00:00:00.000Z`),
             $lte: new Date(`${targetYear}-12-31T23:59:59.999Z`)
@@ -270,6 +266,7 @@ exports.getChartData = asyncHandler(async (req, res) => {
             { label: "Expense", data: expenseData, backgroundColor: "rgba(255, 99, 132, 0.6)" },
         ],
     };
+
 
     const startOfCurrentMonth = new Date(currentYear, currentMonth, 1);
     const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
@@ -362,11 +359,37 @@ exports.getChartData = asyncHandler(async (req, res) => {
         }]
     };
 
+    let totalIncomeCurrentMonth = 0;
+    let totalExpenseCurrentMonth = 0;
+    let netSavingsCurrentMonth = 0;
+
+    const transactionsCurrentMonth = await Transaction.find({
+        userid: new mongoose.Types.ObjectId(userId),
+        date: { $gte: startOfCurrentMonth, $lte: endOfCurrentMonth }
+    });
+
+    transactionsCurrentMonth.forEach(t => {
+        if (t.type === 'income') {
+            totalIncomeCurrentMonth += t.amount;
+        } else if (t.type === 'expense') {
+            totalExpenseCurrentMonth += t.amount;
+        }
+    });
+    netSavingsCurrentMonth = totalIncomeCurrentMonth - totalExpenseCurrentMonth;
+
+
     res.status(200).json({
         success: true,
-        message: 'Chart data fetched successfully',
+        message: 'Chart data and summary fetched successfully',
         barChartData: barChartFormattedData,
         doughnutChartData: doughnutChartFormattedData,
-        lineChartData: lineChartFormattedData
+        lineChartData: lineChartFormattedData,
+        summary: {
+            totalIncome: totalIncomeCurrentMonth,
+            totalExpense: totalExpenseCurrentMonth,
+            netSavings: netSavingsCurrentMonth,
+            month: currentMonth + 1,
+            year: currentYear
+        }
     });
 });

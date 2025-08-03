@@ -1,3 +1,4 @@
+/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -26,6 +27,9 @@ export default {
             transform: "translate(0px, 0px) scale(1)",
           },
         },
+      },
+      blur: {
+        sm: '4px',
       },
     },
   },

@@ -4,6 +4,7 @@ import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
 import { FaRupeeSign } from 'react-icons/fa';
 import { formatCurrency, formatDate } from '../../utils/formatters.js';
+import ConfirmModal from '../common/ConfirmModal.jsx';
 
 const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) => {
   const [editingBudgetId, setEditingBudgetId] = useState(null);
@@ -12,15 +13,24 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
   const [editLoadingId, setEditLoadingId] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this budget?")) {
-      return;
-    }
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [budgetToDeleteId, setBudgetToDeleteId] = useState(null);
+  const [budgetToDeleteCategoryName, setBudgetToDeleteCategoryName] = useState('');
+
+  const confirmDelete = (id, categoryName) => {
+    setBudgetToDeleteId(id);
+    setBudgetToDeleteCategoryName(categoryName);
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    setIsConfirmModalOpen(false);
+    if (!budgetToDeleteId) return;
 
     setError(null);
-    setDeleteLoadingId(id);
+    setDeleteLoadingId(budgetToDeleteId);
     try {
-      await axios.delete(`http://localhost:5000/budgets/${id}`, {
+      await axios.delete(`http://localhost:5000/budgets/${budgetToDeleteId}`, {
         withCredentials: true
       });
       onBudgetDeleted();
@@ -29,7 +39,19 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
       console.error("Delete budget error:", err);
     } finally {
       setDeleteLoadingId(null);
+      setBudgetToDeleteId(null);
+      setBudgetToDeleteCategoryName('');
     }
+  };
+
+  const cancelDelete = () => {
+    setIsConfirmModalOpen(false);
+    setBudgetToDeleteId(null);
+    setBudgetToDeleteCategoryName('');
+  };
+
+  const handleDelete = async (id) => {
+    confirmDelete(id, getCategoryName(budgets.find(b => b._id === id)?.category?._id || budgets.find(b => b._id === id)?.category));
   };
 
   const handleEditClick = (budget) => {
@@ -252,6 +274,13 @@ const BudgetList = ({ budgets, categories, onBudgetDeleted, onBudgetUpdated }) =
           ))}
         </ul>
       )}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        message={`Are you sure you want to delete the budget for ${getCategoryName(budgetToDeleteCategoryName)}?`}
+        onConfirm={executeDelete}
+        onCancel={cancelDelete}
+        confirmText="Delete Budget"
+      />
     </div>
   );
 };

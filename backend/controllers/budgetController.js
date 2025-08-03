@@ -52,10 +52,57 @@ exports.createBudget = asyncHandler(async (req, res) => {
 
 exports.getBudgets = asyncHandler(async (req, res) => {
     const userid = req.user.id;
+    const { category, period, startDate, endDate, sortBy, sortOrder } = req.query;
 
-    const budgets = await Budget.find({ userid })
+    const query = { userid };
+
+    if (category) {
+        if (!mongoose.Types.ObjectId.isValid(category)) {
+            return res.status(400).json({ success: false, message: 'Invalid category ID filter.' });
+        }
+        query.category = category;
+    }
+    if (period) {
+        if (!['monthly', 'weekly', 'yearly'].includes(period)) {
+            return res.status(400).json({ success: false, message: 'Invalid period filter.' });
+        }
+        query.period = period;
+    }
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+            return res.status(400).json({ success: false, message: 'Invalid date range filter.' });
+        }
+        query.date = { $gte: start, $lte: end };
+    } else if (startDate) {
+        const start = new Date(startDate);
+        if (isNaN(start.getTime())) {
+            return res.status(400).json({ success: false, message: 'Invalid start date format.' });
+        }
+        query.startdate = { $gte: start };
+    } else if (endDate) {
+        const end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+            return res.status(400).json({ success: false, message: 'Invalid end date format.' });
+        }
+        query.enddate = { $lte: end };
+    }
+
+    const sortOptions = {};
+    if (sortBy) {
+        const allowedSortFields = ['startdate', 'limit', 'period'];
+        if (!allowedSortFields.includes(sortBy)) {
+            return res.status(400).json({ success: false, message: `Invalid sortBy field: ${sortBy}.` });
+        }
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    } else {
+        sortOptions.startdate = -1;
+    }
+
+    const budgets = await Budget.find(query)
         .populate('category', 'name type')
-        .sort({ startdate: -1 });
+        .sort(sortOptions);
 
     res.status(200).json({ success: true, budgets });
 });

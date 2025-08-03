@@ -35,8 +35,32 @@ exports.createCategory = asyncHandler(async (req, res) => {
 
 exports.getCategories = asyncHandler(async (req, res) => {
     const userid = req.user.id;
+    const { type, name, sortBy, sortOrder } = req.query;
 
-    const categories = await Category.find({ userid }).sort({ name: 1 });
+    const query = { userid };
+
+    if (type) {
+        if (!['income', 'expense'].includes(type)) {
+            return res.status(400).json({ success: false, message: 'Invalid type filter.' });
+        }
+        query.type = type;
+    }
+    if (name) {
+        query.name = { $regex: new RegExp(name, 'i') };
+    }
+
+    const sortOptions = {};
+    if (sortBy) {
+        const allowedSortFields = ['name', 'type'];
+        if (!allowedSortFields.includes(sortBy)) {
+            return res.status(400).json({ success: false, message: `Invalid sortBy field: ${sortBy}.` });
+        }
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    } else {
+        sortOptions.name = 1;
+    }
+
+    const categories = await Category.find(query).sort(sortOptions);
     res.status(200).json({ success: true, categories });
 });
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
+import ConfirmModal from '../common/ConfirmModal.jsx';
 
 const CategoryList = ({ categories, onCategoryDeleted, onCategoryUpdated }) => {
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -10,15 +11,24 @@ const CategoryList = ({ categories, onCategoryDeleted, onCategoryUpdated }) => {
   const [editLoadingId, setEditLoadingId] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this category? This may affect associated transactions.")) {
-      return;
-    }
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
+  const [categoryToDeleteName, setCategoryToDeleteName] = useState('');
+
+  const confirmDelete = (id, name) => {
+    setCategoryToDeleteId(id);
+    setCategoryToDeleteName(name);
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    setIsConfirmModalOpen(false);
+    if (!categoryToDeleteId) return;
 
     setError(null);
-    setDeleteLoadingId(id);
+    setDeleteLoadingId(categoryToDeleteId);
     try {
-      await axios.delete(`http://localhost:5000/categories/${id}`, {
+      await axios.delete(`http://localhost:5000/categories/${categoryToDeleteId}`, {
         withCredentials: true
       });
       onCategoryDeleted();
@@ -27,7 +37,19 @@ const CategoryList = ({ categories, onCategoryDeleted, onCategoryUpdated }) => {
       console.error("Delete category error:", err);
     } finally {
       setDeleteLoadingId(null);
+      setCategoryToDeleteId(null);
+      setCategoryToDeleteName('');
     }
+  };
+
+  const cancelDelete = () => {
+    setIsConfirmModalOpen(false);
+    setCategoryToDeleteId(null);
+    setCategoryToDeleteName('');
+  };
+
+  const handleDelete = async (id) => {
+    confirmDelete(id, categories.find(cat => cat._id === id)?.name);
   };
 
   const handleEditClick = (category) => {
@@ -183,6 +205,13 @@ const CategoryList = ({ categories, onCategoryDeleted, onCategoryUpdated }) => {
           ))}
         </ul>
       )}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        message={`Are you sure you want to delete category "${categoryToDeleteName}"? This may affect associated transactions.`}
+        onConfirm={executeDelete}
+        onCancel={cancelDelete}
+        confirmText="Delete Category"
+      />
     </div>
   );
 };
