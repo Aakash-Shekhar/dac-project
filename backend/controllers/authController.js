@@ -47,6 +47,8 @@ exports.register = asyncHandler(async (req, res) => {
     });
 
     const defaultCategories = [
+        { userid: newUser._id, name: "Uncategorized (Expense)", type: "expense" },
+        { userid: newUser._id, name: "Uncategorized (Income)", type: "income" },
         { userid: newUser._id, name: "Groceries", type: "expense" },
         { userid: newUser._id, name: "Rent", type: "expense" },
         { userid: newUser._id, name: "Utilities", type: "expense" },
@@ -58,7 +60,8 @@ exports.register = asyncHandler(async (req, res) => {
         { userid: newUser._id, name: "Gift", type: "income" },
     ];
 
-    await Category.insertMany(defaultCategories);
+    const createdCategories = await Category.insertMany(defaultCategories);
+
     console.log(`Created default categories for new user: ${newUser.email}`);
 
     return res.status(201).json({ message: "User Registered Successfully", success: true, user: newUser });

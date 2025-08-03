@@ -74,9 +74,9 @@ const TransactionForm = ({ categories, budgets, onTransactionAdded }) => {
       return;
     }
     if (!category) {
-      setError('Please select a valid category.');
-      setIsLoading(false);
-      return;
+        setError('Please select a valid category from the dropdown.');
+        setIsLoading(false);
+        return;
     }
 
     try {
@@ -90,7 +90,6 @@ const TransactionForm = ({ categories, budgets, onTransactionAdded }) => {
       }, { withCredentials: true });
 
       if (res.data.success) {
-        console.log('Transaction added:', res.data.transaction);
         onTransactionAdded();
         setAmount('');
         setCategory('');
@@ -157,7 +156,9 @@ const TransactionForm = ({ categories, budgets, onTransactionAdded }) => {
         <select
           id="category"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => {
+            setCategory(e.target.value);
+          }}
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         >
@@ -212,7 +213,7 @@ const TransactionForm = ({ categories, budgets, onTransactionAdded }) => {
       <button
         type="submit"
         className={`w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-200
-                    ${isLoading ? 'opacity-60 cursor-not-allowed flex items-center justify-center gap-2' : ''}`}
+                     ${isLoading ? 'opacity-60 cursor-not-allowed flex items-center justify-center gap-2' : ''}`}
         disabled={isLoading || overBudgetWarning}
       >
         {isLoading ? <><ImSpinner2 className="animate-spin" /> Adding...</> : 'Add Transaction'}

@@ -6,7 +6,7 @@ const asyncHandler = fn => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
 exports.createTransaction = asyncHandler(async (req, res) => {
-    const { type, amount, category, description, date, recurring } = req.body;
+    const { type, amount, category, description, date, recurring, frequency, nextOccurrenceDate, recurrenceEndDate, isGenerated } = req.body;
     const userid = req.user.id;
 
     if (!amount || !type || !category || !date) {
@@ -41,7 +41,11 @@ exports.createTransaction = asyncHandler(async (req, res) => {
         category,
         description: description ? description.trim() : '',
         date: parsedDate,
-        recurring: recurring || false
+        recurring: recurring || false,
+        frequency: frequency,
+        nextOccurrenceDate: nextOccurrenceDate ? new Date(nextOccurrenceDate) : undefined,
+        recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate) : undefined,
+        isGenerated: isGenerated || false,
     });
 
     const populatedTransaction = await Transaction.findById(transaction._id).populate('category', 'name type');
@@ -276,6 +280,7 @@ exports.getChartData = asyncHandler(async (req, res) => {
             $match: {
                 userid: new mongoose.Types.ObjectId(userId),
                 type: 'expense',
+                category: { $ne: null },
                 date: { $gte: startOfCurrentMonth, $lte: endOfCurrentMonth }
             }
         },
@@ -316,15 +321,11 @@ exports.getChartData = asyncHandler(async (req, res) => {
             $match: {
                 userid: new mongoose.Types.ObjectId(userId),
                 type: 'income',
+                category: { $ne: null },
                 date: matchDateRange
             }
         },
-        {
-            $group: {
-                _id: groupByFormat,
-                totalIncome: { $sum: "$amount" }
-            }
-        },
+        { $group: { _id: groupByFormat, totalIncome: { $sum: "$amount" } } },
         { $sort: { "_id": 1 } },
         { $project: { _id: 0, period: "$_id", totalIncome: 1 } }
     ];

@@ -1,4 +1,6 @@
 const Category = require('../models/Category');
+const Transaction = require('../models/Transaction');
+const Budget = require('../models/Budget');
 const mongoose = require('mongoose');
 
 const asyncHandler = fn => (req, res, next) =>
@@ -118,11 +120,45 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid category ID format.' });
     }
 
-    const category = await Category.findOneAndDelete({ _id: id, userid });
+    try {
+        const categoryToDelete = await Category.findOne({ _id: id, userid });
+        if (!categoryToDelete) {
+            return res.status(404).json({ success: false, message: 'Category not found or does not belong to this user.' });
+        }
 
-    if (!category) {
-        return res.status(404).json({ success: false, message: 'Category not found or does not belong to this user.' });
+        const uncategorizedCategory = await Category.findOne({
+            userid,
+            name: `Uncategorized (${categoryToDelete.type.charAt(0).toUpperCase() + categoryToDelete.type.slice(1)})`,
+            type: categoryToDelete.type
+        });
+
+        if (!uncategorizedCategory) {
+            console.error(`CRITICAL: Uncategorized category for type ${categoryToDelete.type} not found for user ${userid}`);
+            return res.status(500).json({ success: false, message: 'Internal server error: Default uncategorized category missing.' });
+        }
+
+        await Transaction.updateMany(
+            { userid, category: id },
+            { $set: { category: uncategorizedCategory._id } }
+        );
+        console.log(`Reassigned transactions from category ${categoryToDelete.name} to ${uncategorizedCategory.name}`);
+
+        await Budget.updateMany(
+            { userid, category: id },
+            { $set: { category: uncategorizedCategory._id } }
+        );
+        console.log(`Reassigned budgets from category ${categoryToDelete.name} to ${uncategorizedCategory.name}`);
+
+        const deletedCategory = await Category.findOneAndDelete({ _id: id, userid });
+
+        if (!deletedCategory) {
+            return res.status(404).json({ success: false, message: 'Category not found or does not belong to this user.' });
+        }
+
+        res.status(200).json({ success: true, message: 'Category deleted successfully and associated data reassigned.' });
+
+    } catch (error) {
+        console.error("Error while deleting category and reassigning:", error);
+        res.status(500).json({ success: false, message: "Error while deleting category." });
     }
-
-    res.status(200).json({ success: true, message: 'Category deleted successfully.' });
 });

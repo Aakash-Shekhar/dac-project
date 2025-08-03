@@ -134,7 +134,7 @@ const DashboardPage = () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                  legend: { position: 'right' },
+                  legend: { position: 'bottom' },
                   title: { display: false },
                 },
               }}

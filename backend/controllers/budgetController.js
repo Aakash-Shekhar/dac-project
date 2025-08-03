@@ -107,29 +107,37 @@ exports.getBudgets = asyncHandler(async (req, res) => {
         .sort(sortOptions);
 
     const budgetsWithActuals = await Promise.all(budgets.map(async (budget) => {
-        const transactionsForBudget = await Transaction.aggregate([
-            {
-                $match: {
-                    userid: new mongoose.Types.ObjectId(userid),
-                    type: 'expense',
-                    category: budget.category._id,
-                    date: {
-                        $gte: budget.startdate,
-                        $lte: budget.enddate
+        let actualSpent = 0;
+        let remaining = budget.limit;
+        let isOverBudget = false;
+
+        if (budget.category && budget.category._id) {
+            const transactionsForBudget = await Transaction.aggregate([
+                {
+                    $match: {
+                        userid: new mongoose.Types.ObjectId(userid),
+                        type: 'expense',
+                        category: budget.category._id,
+                        date: {
+                            $gte: budget.startdate,
+                            $lte: budget.enddate
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalSpent: { $sum: "$amount" }
                     }
                 }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalSpent: { $sum: "$amount" }
-                }
-            }
-        ]);
+            ]);
 
-        const actualSpent = transactionsForBudget.length > 0 ? transactionsForBudget[0].totalSpent : 0;
-        const remaining = budget.limit - actualSpent;
-        const isOverBudget = remaining < 0;
+            actualSpent = transactionsForBudget.length > 0 ? transactionsForBudget[0].totalSpent : 0;
+            remaining = budget.limit - actualSpent;
+            isOverBudget = remaining < 0;
+        } else {
+            console.warn(`Budget ID ${budget._id} has a null/invalid category after populate. Cannot calculate actualSpent.`);
+        }
 
         return {
             ...budget.toObject(),

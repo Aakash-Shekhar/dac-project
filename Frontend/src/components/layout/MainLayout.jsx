@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { FiHome, FiDollarSign, FiBarChart2, FiList, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiBarChart2, FiList, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FaRupeeSign } from 'react-icons/fa';
 
 const MainLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -9,7 +10,7 @@ const MainLayout = ({ children }) => {
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: FiHome },
-    { name: 'Transactions', path: '/transactions', icon: FiDollarSign },
+    { name: 'Transactions', path: '/transactions', icon: FaRupeeSign },
     { name: 'Categories', path: '/categories', icon: FiList },
     { name: 'Budgets', path: '/budgets', icon: FiBarChart2 },
     { name: 'Profile', path: '/profile', icon: FiSettings },
