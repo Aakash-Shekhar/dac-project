@@ -1,14 +1,18 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const authMiddleware = require("../middlewares/authMiddleware");
-const transactionController = require("../controllers/transactionController");
+const authMiddleware = require('../middlewares/authMiddleware');
+const transactionContoller = require('../controllers/transactionController');
 
-//Protecting all routes
 router.use(authMiddleware);
 
-router.post('/', transactionController.createTransaction);
-router.get("/", transactionController.getAllTransactions);
-router.put("/:id", transactionController.updateTransaction);
-router.delete("/:id", transactionController.deleteTransaction);
+router.post("/", transactionContoller.createTransaction);
+
+router.get("/", transactionContoller.getTransactions);
+
+router.put("/:id", transactionContoller.updateTransaction);
+
+router.delete("/:id", transactionContoller.deleteTransaction);
+
+router.get("/charts-data", transactionContoller.getChartData);
 
 module.exports = router;

@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
-const budgetController = require("../controllers/budgetController");
+const budgetContoller = require("../controllers/budgetController");
 
-//protecting all routes
 router.use(authMiddleware);
 
-router.post("/",  budgetController.createBudget);
-router.get("/",  budgetController.getBudgets);
-router.put("/:id",  budgetController.updateBudget);
-router.delete("/:id",  budgetController.deleteBudget);
+router.post("/", budgetContoller.createBudget);
+
+router.get("/", budgetContoller.getBudgets);
+
+router.put("/:id", budgetContoller.updateBudget);
+
+router.delete("/:id", budgetContoller.deleteBudget);
 
 module.exports = router;
