@@ -10,7 +10,7 @@ const StatusDisplay = ({ type, message, onRetry, emptyActionText, emptyActionPat
         switch (type) {
             case 'loading':
                 return (
-                    <div className="flex flex-col items-center justify-center p-8 text-center text-gray-700">
+                    <div className="flex flex-col items-center justify-center p-8 text-center text-gray-700 h-full w-full">
                         <ImSpinner2 className="animate-spin text-blue-500 mb-4" size={48} />
                         <p className="text-xl font-semibold">Loading data...</p>
                         {message && <p className="text-sm mt-2">{message}</p>}
@@ -18,7 +18,7 @@ const StatusDisplay = ({ type, message, onRetry, emptyActionText, emptyActionPat
                 );
             case 'error':
                 return (
-                    <div className="flex flex-col items-center justify-center p-8 text-center text-red-700 bg-red-50 rounded-lg shadow-sm border border-red-200">
+                    <div className="flex flex-col items-center justify-center p-8 text-center text-red-700 bg-red-50 rounded-lg shadow-sm border border-red-200 h-full w-full">
                         <FiAlertCircle className="text-red-500 mb-4" size={48} />
                         <p className="text-xl font-semibold">Oops! Something went wrong.</p>
                         <p className="text-md mt-2">{message || "Failed to load data. Please try again."}</p>
@@ -40,7 +40,7 @@ const StatusDisplay = ({ type, message, onRetry, emptyActionText, emptyActionPat
                 );
             case 'empty':
                 return (
-                    <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600 bg-white rounded-lg shadow-sm border border-gray-200 h-full w-full">
                         <FiFrown className="text-gray-400 mb-4" size={48} />
                         <p className="text-xl font-semibold">No data found.</p>
                         <p className="text-md mt-2">{message || "It looks like there's nothing here yet."}</p>
@@ -68,7 +68,7 @@ const StatusDisplay = ({ type, message, onRetry, emptyActionText, emptyActionPat
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <div className="flex justify-center items-center">
             {renderContent()}
         </div>
     );
