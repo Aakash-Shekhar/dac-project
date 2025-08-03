@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const bodyParse = require("body-parser");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const db = require('./config/db');
 db();
 
@@ -12,8 +13,16 @@ const categoryRouter = require("./routes/categoryRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const incomeRoutes = require("./routes/incomeRoutes")
 
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true, // allow cookies / auth headers to be sent
+};
+
+app.use(cors(corsOptions));
+
 app.use(bodyParse.json());
 app.use(cookieParser());
+
 
 app.use('/auth', authRoute);
 app.use("/transactions", transactionRoutes);
