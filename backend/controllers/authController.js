@@ -8,6 +8,10 @@ const crypto = require('crypto');
 const asyncHandler = fn => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
+const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 exports.register = asyncHandler(async (req, res) => {
     const { firstname, lastname, email, password } = req.body;
 
@@ -34,10 +38,11 @@ exports.register = asyncHandler(async (req, res) => {
 
     const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
-        return res.status(409).json({
-            message: "User already exists with this email",
-            success: false,
-        });
+        if (existingUser.isVerified) {
+            return res.status(409).json({ message: "User already exists with this email.", success: false });
+        } else {
+            return res.status(409).json({ message: "User exists but not verified. Please verify your email or log in.", success: false });
+        }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -46,6 +51,7 @@ exports.register = asyncHandler(async (req, res) => {
         lastname: trimmedLastname,
         email: trimmedEmail,
         password: hashedPassword,
+        isVerified: false,
     });
 
     const defaultCategories = [
@@ -65,7 +71,30 @@ exports.register = asyncHandler(async (req, res) => {
     await Category.insertMany(defaultCategories);
     console.log(`Created default categories for new user: ${newUser.email}`);
 
-    return res.status(201).json({ message: "User Registered Successfully", success: true, user: newUser });
+    const otp = generateOTP();
+    const otpExpires = Date.now() + 10 * 60 * 1000;
+
+    newUser.otp = otp;
+    newUser.otpExpires = otpExpires;
+    await newUser.save();
+
+    const emailContent = `
+        <h1>Email Verification OTP</h1>
+        <p>Thank you for registering with FinTrack!</p>
+        <p>Your One-Time Password (OTP) for email verification is:</p>
+        <h2 style="color: #4CAF50; font-size: 24px; font-weight: bold;">${otp}</h2>
+        <p>This OTP is valid for 10 minutes.</p>
+        <p>Please enter this OTP in the verification page to activate your account.</p>
+        <p>If you did not register for this account, please ignore this email.</p>
+    `;
+
+    try {
+        await sendEmail(newUser.email, 'FinTrack Email Verification OTP', emailContent);
+        res.status(201).json({ success: true, message: "User registered successfully. An OTP has been sent to your email for verification.", userId: newUser._id, email: newUser.email });
+    } catch (error) {
+        console.error('Registration OTP email sending failed:', error);
+        return res.status(500).json({ success: false, message: 'User registered, but failed to send verification email. Please try logging in to resend.' });
+    }
 });
 
 exports.login = asyncHandler(async (req, res) => {
@@ -76,6 +105,10 @@ exports.login = asyncHandler(async (req, res) => {
     const userExist = await User.findOne({ email: trimmedEmail });
     if (!userExist) {
         return res.status(404).json({ message: "User not found with this email", success: false });
+    }
+
+    if (!userExist.isVerified) {
+        return res.status(403).json({ success: false, message: "Email not verified. Please verify your email to log in." });
     }
 
     const isPasswordMatched = await bcrypt.compare(password, userExist.password);
@@ -123,6 +156,78 @@ exports.logout = (req, res) => {
     });
 };
 
+exports.sendVerificationOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (user.isVerified) {
+        return res.status(400).json({ success: false, message: 'Email is already verified.' });
+    }
+
+    const otp = generateOTP();
+    const otpExpires = Date.now() + 10 * 60 * 1000;
+
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    const emailContent = `
+        <h1>Email Verification OTP</h1>
+        <p>You requested a new OTP for FinTrack email verification.</p>
+        <p>Your One-Time Password (OTP) is:</p>
+        <h2 style="color: #4CAF50; font-size: 24px; font-weight: bold;">${otp}</h2>
+        <p>This OTP is valid for 10 minutes.</p>
+        <p>Please enter this OTP in the verification page to activate your account.</p>
+        <p>If you did not request this, please ignore this email.</p>
+    `;
+
+    try {
+        await sendEmail(user.email, 'FinTrack Email Verification OTP (Resend)', emailContent);
+        res.status(200).json({ success: true, message: 'New OTP sent to your email.' });
+    } catch (error) {
+        console.error('Resend OTP email sending failed:', error);
+        res.status(500).json({ success: false, message: 'Failed to send OTP. Please try again later.' });
+    }
+});
+
+exports.verifyEmailOtp = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+        return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (user.isVerified) {
+        return res.status(400).json({ success: false, message: 'Email is already verified.' });
+    }
+
+    if (!user.otp || !user.otpExpires || user.otp !== otp || user.otpExpires < Date.now()) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+    }
+
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Email verified successfully. You can now log in.' });
+});
+
 exports.forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -135,6 +240,10 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     if (!user) {
         console.log(`Forgot password: User with email ${email} not found.`);
         return res.status(200).json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
+    if (!user.isVerified) {
+        return res.status(403).json({ success: false, message: 'Email not verified. Please verify your email first.' });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -192,6 +301,10 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
     if (!user) {
         return res.status(400).json({ success: false, message: 'Password reset token is invalid or has expired.' });
+    }
+
+    if (!user.isVerified) {
+        return res.status(403).json({ success: false, message: 'Email not verified. Please verify your email first.' });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);

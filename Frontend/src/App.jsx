@@ -5,6 +5,7 @@ import Login from './components/auth/Login';
 import SignUp from './components/auth/SignUp';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
@@ -23,6 +24,7 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
 
       <Route
         path="/dashboard"

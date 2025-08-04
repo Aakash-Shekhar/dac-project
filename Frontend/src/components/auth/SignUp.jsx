@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import { checkValidData } from "../../utils/FormValidation";
 import axios from "axios";
 import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
@@ -42,13 +42,12 @@ const SignUp = () => {
         { withCredentials: true }
       );
 
-      console.log("Sign Up API response:", res.data);
       if (res.data.success) {
-        console.log("Registration successful!");
-        setErrorMessage("✅ Registration successful! Please login.");
-        setTimeout(() => navigate("/"), 2000);
+        console.log("Sign Up API response (success):", res.data);
+        navigate('/verify-email', { state: { email: res.data.email } });
       } else {
         setErrorMessage(res.data.message || "Registration failed. Please try again.");
+        console.log("Sign Up API response (fail):", res.data);
       }
     } catch (error) {
       const errMsg =
@@ -84,9 +83,9 @@ const SignUp = () => {
             id="firstname"
             type="text"
             placeholder="First Name"
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={firstname}
             onChange={(e) => { setFirstname(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
         </div>
@@ -98,9 +97,9 @@ const SignUp = () => {
             id="lastname"
             type="text"
             placeholder="Last Name"
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={lastname}
             onChange={(e) => { setLastname(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
         </div>
@@ -112,9 +111,9 @@ const SignUp = () => {
             id="email"
             type="email"
             placeholder="Email Address"
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
         </div>
@@ -126,9 +125,9 @@ const SignUp = () => {
             id="password"
             type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
           <span
@@ -146,9 +145,9 @@ const SignUp = () => {
             id="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Confirm Password"
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={confirmPassword}
             onChange={(e) => { setConfirmPassword(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-purple-400 focus:border-purple-500 transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
           <span
