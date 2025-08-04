@@ -29,7 +29,7 @@ const UserProfilePage = () => {
         'https://cdn-icons-png.flaticon.com/512/3135/3135789.png',
         'https://cdn-icons-png.flaticon.com/512/1077/1077114.png',
         'https://cdn-icons-png.flaticon.com/512/4140/4140047.png',
-        'https://cdn-icons-png.flation.com/512/616/616438.png',
+        'https://cdn-icons-png.flaticon.com/512/616/616438.png',
     ];
 
     const fetchUserProfile = async () => {
