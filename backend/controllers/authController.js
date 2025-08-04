@@ -2,6 +2,8 @@ const User = require("../models/User");
 const Category = require("../models/Category");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
+const { sendEmail } = require('../services/emailService');
+const crypto = require('crypto');
 
 const asyncHandler = fn => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -60,8 +62,7 @@ exports.register = asyncHandler(async (req, res) => {
         { userid: newUser._id, name: "Gift", type: "income" },
     ];
 
-    const createdCategories = await Category.insertMany(defaultCategories);
-
+    await Category.insertMany(defaultCategories);
     console.log(`Created default categories for new user: ${newUser.email}`);
 
     return res.status(201).json({ message: "User Registered Successfully", success: true, user: newUser });
@@ -121,6 +122,85 @@ exports.logout = (req, res) => {
         success: true,
     });
 };
+
+exports.forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        console.log(`Forgot password: User with email ${email} not found.`);
+        return res.status(200).json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = Date.now() + 3600000;
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpires;
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    const emailContent = `
+        <h1>Password Reset Request</h1>
+        <p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>
+        <p>Please click on the following link, or paste this into your browser to complete the process:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+    `;
+
+    try {
+        await sendEmail(user.email, 'FinTrack Password Reset', emailContent);
+        res.status(200).json({ success: true, message: 'Password reset link sent to your email.' });
+    } catch (error) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        console.error('Forgot password email sending failed:', error);
+        res.status(500).json({ success: false, message: 'Failed to send password reset email. Please try again later.' });
+    }
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { newPassword, confirmNewPassword } = req.body;
+
+    if (!newPassword || !confirmNewPassword) {
+        return res.status(400).json({ success: false, message: 'Please enter a new password and confirm it.' });
+    }
+    if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ success: false, message: 'Passwords do not match.' });
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({
+            message: "New password must be at least 8 characters long, include 1 uppercase, 1 lowercase, and 1 number.",
+            success: false,
+        });
+    }
+
+    const user = await User.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+        return res.status(400).json({ success: false, message: 'Password reset token is invalid or has expired.' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password has been successfully reset.' });
+});
 
 exports.getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find().select("-password");

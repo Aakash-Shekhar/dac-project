@@ -28,15 +28,15 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+        default: 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
+    resetPasswordToken: {
+        type: String,
+        required: false
     },
-    updatedAt: {
+    resetPasswordExpires: {
         type: Date,
-        default: Date.now,
+        required: false
     }
 }, { timestamps: true });
 

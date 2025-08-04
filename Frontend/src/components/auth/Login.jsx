@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { checkValidData } from "../../utils/FormValidation";
 import axios from "axios";
 
@@ -6,7 +7,6 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
 
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,9 +14,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate();
   const { login: authContextLogin } = useAuth();
-   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -46,7 +45,7 @@ const Login = () => {
       const errMsg =
         error.response?.data?.message || "Login failed. Please try again.";
       setErrorMessage(errMsg);
-      console.error("Login.jsx: Login error (network/server issue):", error);
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -76,25 +75,25 @@ const Login = () => {
             id="email"
             type="email"
             placeholder="Your Email"
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500
-                       transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500
+                       transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
         </div>
 
-        <div className="relative mb-6">
+        <div className="relative mb-3">
           <label htmlFor="password" className="sr-only">Password</label>
           <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             placeholder="Your Password"
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500
-                               transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setErrorMessage(null); }}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-500
+                               transition duration-200 ease-in-out text-gray-800 placeholder-gray-500 text-lg"
             required
           />
           <span
@@ -103,6 +102,12 @@ const Login = () => {
           >
             {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
           </span>
+        </div>
+
+        <div className="text-right mb-6 text-sm">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Forgot Password?
+          </Link>
         </div>
 
         {errorMessage && (
@@ -117,7 +122,7 @@ const Login = () => {
                       focus:outline-none focus:ring-3 focus:ring-blue-400 focus:ring-offset-2
                       transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg
                       ${isLoading ? "opacity-60 cursor-not-allowed flex items-center justify-center gap-2" : ""}`}
-          disabled={isLoading}
+          disabled={isLoading || (errorMessage && errorMessage !== "Login failed. Please check your credentials.")}
         >
           {isLoading ? (
             <>
